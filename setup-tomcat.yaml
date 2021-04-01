@@ -1,0 +1,44 @@
+---
+- hosts: all
+  become: true
+  vars: 
+    tomcat:
+      - tomcat
+      - tomcat-webapps 
+      - tomcat-admin-webapps 
+      - tomcat-docs-webapp 
+      - tomcat-javadoc
+  tasks: 
+  - name: install tomcat and dependecies 
+    yum:
+      name: "{{ item }}"
+    with_items: "{{ tomcat }}"
+  - name: Stop service httpd
+    service:
+      name: httpd
+      state: stopped
+  - name: Start service tomcat
+    service:
+      name: tomcat
+      state: started
+      enabled: yes
+  - name: Delete index file
+    file:
+      state: absent
+      path: /usr/share/tomcat/webapps/examples/index.html
+  - name: Copy new index file from controller
+    copy:
+      src: /home/ansible/projects/index.html
+      dest: /usr/share/tomcat/webapps/examples/index.html
+      owner: ansible
+      group: ansible
+      mode: '0777'
+  - name: Restart service tomcat
+    service:
+      name: tomcat
+      state: restarted
+#  - name: enable 9095/tcp port on firewall
+#      firewalld:
+#        port: 9095/tcp
+#        permanent: true
+#        state: enabled

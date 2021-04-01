@@ -1,0 +1,29 @@
+---
+- hosts: all
+  become: true
+  vars:
+    users:
+      - user3
+      - user4
+  tasks:
+
+  - name: add user 
+    user:
+      name: "{{ item }}"
+      password: "{{ lookup('password', '/tmp/passwordfile chars=digits') }}"
+      shell: /bin/bash
+      append: yes
+      createhome: yes
+    with_items: "{{ users }}" 
+  - name: Sudoers  update sudoers file and validate
+    lineinfile: 
+      path: /etc/sudoers
+      insertafter: EOF
+      line: '{{ item }} ALL=(ALL) NOPASSWD: ALL'
+    with_items: "{{ users }}"
+  - name: change password on next logon
+    command: chage -d 0 '{{item}}'
+    with_items: "{{ users }}"
+
+
+
